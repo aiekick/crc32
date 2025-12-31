@@ -1,7 +1,7 @@
+#include <nmmintrin.h> // _mm_crc32_u8/u32/u64
 #include <cstdint> // uint32_t, uint8_t
 #include <iostream>
 #include <chrono>
-#include <nmmintrin.h> // _mm_crc32_u8/u32/u64
 
 #if defined(_MSC_VER)
 #include <intrin.h>
@@ -38,11 +38,10 @@ private:
         return a_crc32;
     }
 
-    uint32_t m_compute_crc32_sse4(uint32_t a_crc32,
+    static uint32_t m_compute_crc32_sse4(uint32_t a_crc32,
                                   const void *ap_datas,
                                   size_t a_bytes_size) {
         const uint8_t *p8 = static_cast<const uint8_t *>(ap_datas);
-
 #if defined(_M_X64) || defined(__x86_64__)
         while (a_bytes_size >= 8) {
             a_crc32 = static_cast<uint32_t>(
@@ -53,11 +52,9 @@ private:
             a_bytes_size -= 8;
         }
 #endif
-
         while (a_bytes_size--) {
             a_crc32 = _mm_crc32_u8(a_crc32, *p8++);
         }
-
         return a_crc32;
     }
 
@@ -67,7 +64,7 @@ public:
     Crc32() {
         m_has_sse42 = false;
 #ifdef _MSC_VER
-        m_has_sse42 = cpu_has_sse42();
+        m_has_sse42 = false;//cpu_has_sse42();
 #endif
 #ifdef __SSE4_2__
         m_has_sse42 = true;
@@ -96,7 +93,7 @@ public:
         return *this;
     }
 
-    uint32_t get() {
+    [[nodiscard]] uint32_t get() const {
         return m_crc32_value ^ 0xFFFFFFFFu;
     }
 };
@@ -116,7 +113,7 @@ int main() {
         }
         const auto end = clock::now();
         auto ns =
-            std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+                std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
         std::cout << "avg ns = " << (ns / N) << "\n";
     }
     {
@@ -128,7 +125,7 @@ int main() {
         }
         const auto end = clock::now();
         auto ns =
-            std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+                std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
         std::cout << "avg ns = " << (ns / N) << "\n";
     }
 }
